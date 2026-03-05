@@ -435,8 +435,11 @@ function drawPass(){
 
 function drawPlay(){
   ctx.fillStyle='#0f1932'; ctx.fillRect(0,0,W,H);
-  const atk=atkGrid(), def=defGrid();
   const lgx=LG[0], lgy=LG[1], rgx=RG[0], rgy=RG[1];
+  // In 1-player mode always show human (P1) on left, AI (P2) hidden on right.
+  // In 2-player mode show current attacker's fleet on left, defender's hidden on right.
+  const leftGrid  = twoPlayer ? atkGrid() : gridP1;
+  const rightGrid = twoPlayer ? defGrid() : gridP2;
   // Labels
   ctx.font='20px sans-serif'; ctx.fillStyle='#aabbd4'; ctx.textAlign='center';
   if(twoPlayer){
@@ -446,8 +449,8 @@ function drawPlay(){
     ctx.fillText('Your Fleet',lgx+N*CS/2,lgy-32);
     ctx.fillText('Enemy Waters',rgx+N*CS/2,rgy-32);
   }
-  drawGrid(atk,lgx,lgy,false);
-  drawGrid(def,rgx,rgy,true);
+  drawGrid(leftGrid,lgx,lgy,false);
+  drawGrid(rightGrid,rgx,rgy,true);
   // Score
   ctx.font='18px sans-serif'; ctx.fillStyle='#ffd75a'; ctx.textAlign='left';
   if(twoPlayer){
@@ -463,7 +466,7 @@ function drawPlay(){
   const hov=cellAt(rgx,rgy);
   if(hov&&state===PLAY&&(twoPlayer||curPlayer===1)){
     const[r,c]=hov;
-    const v=def.cells[r][c];
+    const v=rightGrid.cells[r][c];
     if(v==='~'||v==='S'){
       ctx.strokeStyle='rgba(255,255,150,0.7)'; ctx.lineWidth=2;
       ctx.strokeRect(rgx+c*CS+1,rgy+r*CS+1,CS-2,CS-2);
