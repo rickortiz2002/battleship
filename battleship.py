@@ -682,14 +682,15 @@ class BattleshipGame:
 
     # ── main loop ─────────────────────────────────────────────────────────────
     async def run(self):
-        while True:
-            dt    = self.clock.tick(60)
+        running = True
+        while running:
             mx,my = pygame.mouse.get_pos()
             mpos  = (mx, my)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit(); sys.exit()
+                    running = False
+                    break
 
                 # ── GLOBAL HUD: Reset / Quit (all states except menus)
                 if (event.type == pygame.MOUSEBUTTONDOWN
@@ -698,7 +699,8 @@ class BattleshipGame:
                         self.new_game()
                         continue          # skip state-specific handlers this event
                     elif self.b_quit.collidepoint(mpos):
-                        pygame.quit(); sys.exit()
+                        running = False
+                        break
 
                 # ── MENU
                 if self.state == MENU:
@@ -794,6 +796,7 @@ class BattleshipGame:
                         self.new_game()
 
             # non-blocking AI delay (1-player only, AI never gets questions)
+            dt = self.clock.get_time()
             if self.state == PLAY and not self.two_player and self.cur_player == 2:
                 self.ai_delay += dt
                 if self.ai_delay >= 600:
@@ -812,6 +815,7 @@ class BattleshipGame:
 
             pygame.display.flip()
             await asyncio.sleep(0)
+            self.clock.tick(60)
 
 
 async def main():
