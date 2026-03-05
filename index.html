@@ -1,438 +1,640 @@
-<html lang="en-us"><script src="https://pygame-web.github.io/cdn/0.9.3/pythons.js" type=module id="site" data-python="python3.12" data-LINES=42 data-COLUMNS=132 data-os="vtx,snd,gui" async defer>#<!--
-
-print("""
-Loading bsgame from bsgame.apk
-    Pygbag Version : 0.9.3
-    Template Version : 0.9.3
-    Python  : 3.12
-    CDN URL : https://pygame-web.github.io/cdn/0.9.3/
-    Screen  : 1280x720
-    Title   : bsgame
-    Folder  : bsgame
-    Authors : pgw
-    SPDX-License-Identifier: cookiecutter.spdx
-
-""")
-
-import sys
-import asyncio
-import platform
-import json
-from pathlib import Path
-
-# do not rename
-async def custom_site():
-    import embed
-    platform.document.body.style.background = "#7f7f7f"
-
-    platform.window.transfer.hidden = true
-    platform.window.canvas.style.visibility = "visible"
-
-
-    bundle = "bsgame"
-
-    # the C or js loader could do that but be explicit.
-    appdir = Path(f"/data/data/{bundle}") # /data/data/bsgame
-    appdir.mkdir()
-
-
-    # unpack filesystem from compressed archive into work dir
-    if platform.window.location.host.find('.itch.zone')>0:
-        import zipfile
-        async with platform.fopen("bsgame.apk", "rb") as archive:
-            with zipfile.ZipFile(archive) as zip_ref:
-                zip_ref.extractall(appdir.as_posix())
-    else:
-        import tarfile
-        async with platform.fopen("bsgame.tar.gz", "rb") as archive:
-            tar = tarfile.open(fileobj=archive, mode="r:gz")
-            tar.extractall(path=appdir.as_posix(), filter='tar')
-            tar.close()
-
-    # preloader will change to work dir and prepend it to sys.path
-    platform.run_main(PyConfig, loaderhome= appdir / "assets", loadermain=None)
-
-
-    # wait preloading complete : that includes images and wasm compilation of bundled modules
-    while embed.counter()<0:
-        await asyncio.sleep(.1)
-
-    main = appdir / "assets" / "main.py"
-
-    # TODO: test for window.webkitAudioContext and block aio loop until gesture if accessing media manager play
-    # before a gesture is recorded ( touch or click )
-
-    # test/wait user media interaction
-    if not platform.window.MM.UME:
-
-        # now that apk is mounted we have access to font cache
-        # but we need to fill __file__ that is not yet set
-        __import__(__name__).__file__ = main
-
-        # now make a prompt
-        msg  = "Ready to start ! Please click/touch page"
-        platform.window.infobox.innerText = msg
-        print("\n"*4, f"    * Waiting for media user engagement. {msg} *" , "\n"*4)
-
-        while not platform.window.MM.UME:
-            await asyncio.sleep(.1)
-
-    # start async top level machinery if not started and add a console in any case if requested.
-    await TopLevel_async_handler.start_toplevel(platform.shell, console=window.python.config.debug)
-
-    # now that apk is mounted we have access to font cache
-    # but we need to fill __file__/__name__ that are not yet set
-    __import__(__name__).__file__ = main
-
-
-    def ui_callback(pkg):
-        platform.window.infobox.innerText = f"installing {pkg}"
-
-    await shell.source(main, callback=ui_callback)
-
-    # if you don't reach that step
-    # your main.py has an infinite sync loop somewhere !
-
-    platform.window.infobox.style.display = "none"
-    platform.window.config.gui_divider = 1
-    platform.window.window_resize()
-    print("default.tmpl: done")
-
-    shell.interactive()
-
-asyncio.run( custom_site() )
-
-
-
-
-
-
-
-
-
-
-
-
-# BEGIN BLOCK
-#
-# now this is the html part you can (and should) customize
-# It is not mandatory : pygame-script when it reads the first line (also called
-# shebang ) of above code create absolute minimal widget set
-# required for running with default rules
-#
-# do not alter that comment block it is separating python code from html code
-# =============================================================================
-# --></script><head><!--
-//=============================================================================
-//
-//
-//
-//
-//
-//
-//
-
-    {%- if cookiecutter.comment != "" -%}
-{{cookiecutter.comment}}
-    {% endif %}
-
---><script type="application/javascript">
-// END BLOCK
-
-
-
-// this dict is available under PyConfig.config from __main__
-
-config = {
-    xtermjs : "1" ,
-    _sdl2 : "canvas",
-    user_canvas : 0,
-    user_canvas_managed : 0,
-    gui_divider : 2,
-    ume_block : 1,
-    can_close : 0,
-    archive : "bsgame",
-    gui_debug : 2,
-    cdn : "https://pygame-web.github.io/cdn/0.9.3/",
-    autorun : 0,
-    PYBUILD : "3.12",
-    fb_ar   :  1.77,
-    fb_width : "1280",
-    fb_height : "720"
-}
-
-function show_infobox() {
-    infobox.style.display = "block";
-
-    // Measure box
-    const w = infobox.offsetWidth;
-    const h = infobox.offsetHeight;
-
-    // Center in viewport
-    const left = (window.innerWidth - w) / 2;
-    const top = (window.innerHeight - h) / 2;
-
-    infobox.style.left = left + "px";
-    infobox.style.top = top + "px";
-}
-
-</script>
-
-    <title>bsgame</title>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="viewport" content="height=device-height, initial-scale=1.0">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes"/>
-
-
-    <link rel="icon" type="image/png" href="favicon.png" sizes="16x16">
-
-    <style>
-        #status {
-            display: inline-block;
-            vertical-align: top;
-            margin-top: 20px;
-            margin-left: 30px;
-            font-weight: bold;
-            color: rgb(120, 120, 120);
-        }
-
-        #progress {
-            height: 20px;
-            width: 300px;
-        }
-
-        #infobox {
-            position: fixed; /* center relative to viewport */
-            background: green;
-            color: blue;
-            font-weight: bold;
-            padding: 12px 24px;
- /*           display: none; */
-            z-index: 999999;
-        }
-        div.emscripten { text-align: center; }
-        div.emscripten_border { border: 1px solid black; }
-        div.thick_border { border: 4px solid black; }
-
-        /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
-        /* average size of droid screen 470dp x 320dp  */
-        canvas.emscripten {
-            border: 0px none;
-            background-color: transparent;
-            width: 100%;
-            height: 100%;
-            z-index: 5;
-
-            padding: 0;
-            margin: 0 auto;
-
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
-        }
-
-        body {
-            font-family: arial;
-            margin: 0;
-            padding: none;
-            background-color:powderblue;
-        }
-
-        .topright{
-           position:absolute;
-           top:0px;
-           right:0px;
-        }
-
-        .bottomright {
-            position:absolute;
-            top: 40%;
-            right: 0px;
-        }
-
-        .center {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .trinfo{
-           position: relative;
-           right: 0px;
-           border: 1px solid black;
-        }
-
-        .framed{
-           position: relative;
-           top: 150px;
-           right: 10px;
-           border: 1px solid black;
-        }
-    </style>
-
-    <script>
-/*
-        if (navigator.serviceWorker)
-            navigator.serviceWorker.register("https://pygame-web.github.io/cdn/0.9.3/pygbag0.9.3.js")
-        else
-            console.warn("Service workers not supported")
-*/
-    </script>
-
-    <script src="https://pygame-web.github.io/cdn/0.9.3//browserfs.min.js"></script>
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Battleship</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden}
+canvas{display:block;image-rendering:pixelated}
+</style>
 </head>
-
 <body>
+<canvas id="c"></canvas>
+<script>
+'use strict';
+// ── CONSTANTS ──────────────────────────────────────────────────────────────
+const W=1100,H=760,N=10,CS=48,MAR=45;
+const LG=[MAR,165],RG=[W-N*CS-MAR,165],PG=[150,165];
+const SIZES=[5,4,3,3,2];
+const NAMES=["Carrier (5)","Battleship (4)","Cruiser (3)","Submarine (3)","Destroyer (2)"];
+const MENU=0,P1P=1,P2P=2,PASS=3,PLAY=4,OVER=5,QST=6;
 
-    <div id="transfer" align=center>
-<!--        <div class="spinner" id='spinner'></div> -->
-        <div class="emscripten" id="status">Downloading...</div>
-        <div class="emscripten">
-            <progress value="0" max="100" id="progress"></progress>
-        </div>
-    </div>
+// ── QUESTIONS ──────────────────────────────────────────────────────────────
+const QUESTIONS=[
+  {q:"What U.S. foreign policy doctrine, announced in 1947, pledged support for free peoples resisting communist subjugation?",
+   c:["A) Marshall Plan","B) Truman Doctrine","C) Eisenhower Doctrine","D) Monroe Doctrine"],a:1},
+  {q:"The Marshall Plan (1948) was primarily designed to accomplish which goal?",
+   c:["A) Rebuild European economies devastated by WWII","B) Create a military alliance against the USSR","C) Fund the Korean War","D) Establish the United Nations"],a:0},
+  {q:"Which military alliance, formed in 1949, pledged collective defense among Western nations against Soviet aggression?",
+   c:["A) SEATO","B) ANZUS Pact","C) NATO","D) The Warsaw Pact"],a:2},
+  {q:"The Soviet military alliance created in 1955 in direct response to NATO was called the...",
+   c:["A) COMINTERN","B) Warsaw Pact","C) Axis Alliance","D) Soviet Security Treaty"],a:1},
+  {q:"Winston Churchill's 1946 speech warned that an 'Iron Curtain' had descended, dividing Europe between...",
+   c:["A) Democracy and fascism","B) Capitalism and socialism only","C) Free nations and Soviet-dominated communist states","D) NATO members and neutral countries"],a:2},
+  {q:"The U.S. foreign policy of 'containment' — stopping the spread of communism — was first clearly articulated by diplomat...",
+   c:["A) Dean Acheson","B) John Foster Dulles","C) George Kennan","D) George Marshall"],a:2},
+  {q:"The Berlin Airlift (1948–1949) was the U.S. and British response to which Soviet action?",
+   c:["A) Construction of the Berlin Wall","B) The Soviet blockade of West Berlin","C) North Korea's invasion of South Korea","D) Soviet missiles placed in Cuba"],a:1},
+  {q:"The Korean War began in June 1950 when which event occurred?",
+   c:["A) China invaded South Korea across the Yalu River","B) Soviet aircraft bombed Seoul","C) North Korean forces crossed the 38th parallel into South Korea","D) The U.S. attacked a North Korean naval vessel"],a:2},
+  {q:"President Truman relieved General MacArthur of command during the Korean War because MacArthur...",
+   c:["A) Suffered a catastrophic military defeat at Inchon","B) Publicly opposed Truman's limited-war strategy and insubordination","C) Refused to commit troops against the Chinese army","D) Negotiated an unauthorized ceasefire with North Korea"],a:1},
+  {q:"The Korean War concluded in 1953 with which outcome?",
+   c:["A) A decisive North Korean victory","B) A South Korean military victory","C) A peace treaty that permanently unified the Korean peninsula","D) An armistice that restored the pre-war boundary near the 38th parallel"],a:3},
+  {q:"McCarthyism, named after Senator Joseph McCarthy, is best described as a period of...",
+   c:["A) U.S. diplomatic engagement with the USSR in the 1950s","B) Widespread accusations of communist subversion with little or no evidence","C) Intense U.S.-Soviet competition for dominance in space","D) Anti-war protests during the Vietnam War era"],a:1},
+  {q:"The House Un-American Activities Committee (HUAC) became most controversial for investigating...",
+   c:["A) Soviet spies working inside the Pentagon","B) Civil rights leaders in the American South","C) Suspected communist influence in Hollywood and the federal government","D) Vietnam War protesters on college campuses"],a:2},
+  {q:"The Soviet Union launched Sputnik — the world's first artificial satellite — in which year?",
+   c:["A) 1953","B) 1955","C) 1957","D) 1961"],a:2},
+  {q:"Congress created which civilian space agency in 1958 partly in response to the Soviet Sputnik launch?",
+   c:["A) DARPA","B) The Department of Defense Space Division","C) NASA","D) The Strategic Air Command"],a:2},
+  {q:"The Cuban Missile Crisis of October 1962 began when U.S. intelligence discovered that...",
+   c:["A) Cuba had secretly constructed its own nuclear bombs","B) Soviet ships were delivering nuclear missiles to Cuba","C) The Soviet Union had invaded Cuba with conventional forces","D) Castro was planning a nuclear attack on Miami"],a:1},
+  {q:"President Kennedy's primary response during the Cuban Missile Crisis was to...",
+   c:["A) Order an immediate U.S. invasion of Cuba","B) Launch air strikes to destroy the Soviet missile sites","C) Impose a naval blockade (quarantine) of Cuba to prevent Soviet ships","D) Request United Nations forces to remove the missiles"],a:2},
+  {q:"The failed April 1961 CIA-sponsored invasion of Cuba by U.S.-trained Cuban exiles is known as...",
+   c:["A) Operation Mongoose","B) The Bay of Pigs invasion","C) Operation Neptune Spear","D) The Cuba Liberation Campaign"],a:1},
+  {q:"The Berlin Wall, built to stop East Germans from fleeing to the West, was constructed in which year?",
+   c:["A) 1949","B) 1955","C) 1961","D) 1968"],a:2},
+  {q:"In his January 1961 farewell address, President Eisenhower's most famous warning concerned the dangers of the...",
+   c:["A) Soviet nuclear arsenal and missile gap","B) Military-industrial complex","C) Communist Party's influence in U.S. labor unions","D) Domino effect spreading communism in Southeast Asia"],a:1},
+  {q:"The 'domino theory,' used to justify U.S. involvement in Vietnam, argued that...",
+   c:["A) Nuclear weapons technology would inevitably spread across all Asian nations","B) U.S. economic aid alone could prevent communism from spreading","C) If one country fell to communism, neighboring countries would soon follow","D) The U.S. should immediately withdraw all military forces from Asia"],a:2},
+  {q:"NSC-68, the top-secret 1950 U.S. government policy paper, recommended that America respond to Soviet power by...",
+   c:["A) Seeking direct diplomatic negotiations with Stalin","B) Withdrawing U.S. forces from Western Europe","C) Massively increasing U.S. defense spending","D) Reducing the nuclear arsenal to show good faith"],a:2},
+  {q:"The Cold War nuclear doctrine of Mutually Assured Destruction (MAD) meant that...",
+   c:["A) Only the United States had sufficient nuclear force to destroy the Soviet Union","B) Any nuclear first strike would result in the total destruction of both superpowers, deterring attack","C) Conventional military forces, not nuclear weapons, would decide any Cold War conflict","D) A nuclear war between the superpowers was statistically inevitable by 1970"],a:1},
+  {q:"The foreign policy of détente, pursued in the 1970s by Nixon and Kissinger, refers to...",
+   c:["A) A major increase in U.S. military spending to surpass the Soviets","B) A relaxation of Cold War tensions and improved diplomatic relations with the Soviet Union","C) The U.S. strategy of withdrawing all forces from Southeast Asia","D) Reagan's policy of confronting Soviet expansionism worldwide"],a:1},
+  {q:"President Nixon's historic 1972 visit to China was significant in Cold War diplomacy because it...",
+   c:["A) Led to China becoming a member of NATO","B) Created a formal U.S.-China military alliance against Japan","C) Restored diplomatic relations and exploited tensions between China and the Soviet Union","D) Directly ended U.S. military involvement in the Vietnam War"],a:2},
+  {q:"The Gulf of Tonkin Resolution (1964) was significant because it gave President Johnson...",
+   c:["A) Authority to use nuclear weapons against North Vietnam if attacked","B) Broad power to escalate U.S. military involvement in Vietnam without a formal declaration of war","C) Congressional permission to invade Cuba and remove Castro","D) The legal authority to reinstate the military draft"],a:1},
+  {q:"The Ho Chi Minh Trail, critical to North Vietnam's war effort, was primarily...",
+   c:["A) A North Vietnamese supply network through Laos and Cambodia into South Vietnam","B) A U.S. military strategy for destroying North Vietnamese infrastructure","C) A peace agreement signed between North and South Vietnam in 1968","D) A trade route linking China to ports in South Vietnam"],a:0},
+  {q:"President Nixon's strategy of 'Vietnamization' was designed to...",
+   c:["A) Deploy additional U.S. ground combat troops to decisively win the war","B) Intensify the bombing of North Vietnam until it surrendered","C) Gradually withdraw U.S. troops while strengthening South Vietnamese forces to fight alone","D) Negotiate a direct peace settlement with the Viet Cong leadership"],a:2},
+  {q:"The Strategic Arms Limitation Talks (SALT I, 1972) between the U.S. and USSR produced an agreement that...",
+   c:["A) Required complete nuclear disarmament by both superpowers within ten years","B) Placed limits on certain categories of nuclear weapons and delivery systems","C) Established a mutual defense treaty between the two nations","D) Permanently ended the arms race and the Cold War"],a:1},
+  {q:"The Reagan Doctrine of the 1980s is best described as a U.S. policy of...",
+   c:["A) Seeking to renew détente and cooperative relations with the Soviet Union","B) Providing military and economic support to anti-communist movements fighting Soviet-backed governments","C) Constructing a space-based missile defense shield over North America","D) Withdrawing U.S. military forces from overseas commitments in Europe and Asia"],a:1},
+  {q:"President Reagan's proposed missile defense system, popularly nicknamed 'Star Wars,' was officially called the...",
+   c:["A) Strategic Arms Limitation Treaty (SALT II)","B) Nuclear Freeze Initiative","C) Strategic Defense Initiative (SDI)","D) Intermediate-Range Nuclear Forces Treaty"],a:2},
+  {q:"The fall of the Berlin Wall in November 1989 is best interpreted as a symbol of...",
+   c:["A) The beginning of a new Cold War between the superpowers","B) A decisive U.S. military victory over the Soviet Union in Europe","C) The collapse of communist governments across Eastern Europe and the end of the Cold War","D) German reunification achieved with active Soviet support"],a:2},
+  {q:"Julius and Ethel Rosenberg were tried and executed in 1953 after being convicted of...",
+   c:["A) Plotting to assassinate President Truman","B) Organizing illegal anti-government protests during the Korean War","C) Passing classified U.S. nuclear weapons secrets to the Soviet Union","D) Committing treason by publicly burning their draft cards"],a:2},
+  {q:"Secretary of State John Foster Dulles's doctrine of 'massive retaliation' threatened that any Soviet aggression would be answered with...",
+   c:["A) An immediate and overwhelming conventional military counterattack","B) Strict economic sanctions and a full trade embargo on the USSR","C) A U.S. nuclear strike at a time and place of America's choosing","D) Complete diplomatic isolation of the Soviet Union by Western allies"],a:2},
+  {q:"U.S. military action in Korea was unusual in American history because it was authorized by...",
+   c:["A) A formal declaration of war voted on by the U.S. Congress","B) A United Nations Security Council resolution calling for member states to repel the invasion","C) A secret executive order signed by President Truman without congressional knowledge","D) A NATO collective defense vote requiring all member nations to contribute troops"],a:1},
+  {q:"The Cold War strategy of 'brinkmanship,' associated with Secretary Dulles, involved...",
+   c:["A) Offering economic incentives to persuade communist nations to switch sides","B) Quietly backing away from dangerous confrontations to preserve peace","C) Pushing a dangerous confrontation to the very edge of war to force the enemy to back down first","D) Using nuclear disarmament agreements as a tool of Cold War diplomacy"],a:2},
+  {q:"The Helsinki Accords of 1975 were historically significant because they...",
+   c:["A) Formally ended U.S. military involvement in the Vietnam War","B) Recognized post-World War II European borders and included human rights provisions","C) Created the political framework that became the European Union","D) Established the world's first international nuclear test ban treaty"],a:1},
+  {q:"The United States achieved the final goal of the Space Race when NASA's Apollo 11 mission landed on the Moon in...",
+   c:["A) 1965","B) 1967","C) 1969","D) 1972"],a:2},
+  {q:"A 'proxy war' in Cold War terminology describes a conflict where...",
+   c:["A) U.S. and Soviet troops fought each other directly in a third country","B) The U.S. and USSR supported opposing sides in regional conflicts to advance their interests without direct combat","C) Two Cold War allies fought each other while the superpowers stayed neutral","D) Nuclear weapons were placed in a third country by one of the superpowers"],a:1},
+  {q:"State Department official Alger Hiss became a symbol of Red Scare fears because he was...",
+   c:["A) The Senate Republican who first accused Communists of infiltrating the Army","B) Convicted of perjury related to accusations that he had spied for the Soviet Union","C) A Soviet KGB officer who personally recruited American nuclear scientists as spies","D) The founder of the House Un-American Activities Committee"],a:1},
+  {q:"Kennedy's policy of 'flexible response' replaced Eisenhower's massive retaliation, meaning the U.S. would...",
+   c:["A) Always respond to Soviet aggression with an immediate nuclear strike","B) Match the scale of any Soviet military threat with a proportional response, conventional or nuclear","C) Avoid any military confrontation with the Soviets to prevent escalation","D) Rely entirely on economic sanctions rather than military force"],a:1},
+  {q:"Fighting the Korean War to restore the pre-war border rather than to conquer North Korea reflected the Cold War doctrine of...",
+   c:["A) Massive Retaliation","B) Brinkmanship","C) Rollback","D) Containment"],a:3}
+];
 
+// ── CANVAS SETUP ───────────────────────────────────────────────────────────
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+canvas.width=W; canvas.height=H;
+let mx=0,my=0;
 
+function resize(){
+  const s=Math.min(window.innerWidth/W,window.innerHeight/H);
+  canvas.style.width=(W*s)+'px'; canvas.style.height=(H*s)+'px';
+}
+window.addEventListener('resize',resize); resize();
 
-    <canvas class="emscripten" id="canvas"
-width="1px"
-height="1px"
-    oncontextmenu="event.preventDefault()" tabindex=1>
-    </canvas>
+function canvasPos(e){
+  const r=canvas.getBoundingClientRect();
+  return {x:(e.clientX-r.left)*(W/r.width), y:(e.clientY-r.top)*(H/r.height)};
+}
 
-    <canvas class="emscripten" id="canvas3d"
-width="1280px"
-height="720px"
-    oncontextmenu="event.preventDefault()" tabindex=1 hidden>
-    </canvas>
-
-    <div id="infobox">Loading, please wait ...</div>
-
-    <div id=html></div>
-
-    <div id=crt  class=bottomright >
-
-        <div id="system" hidden>
-            <div class="button-container">
-                <button id="aiostop" disabled>AIO ⏏︎</button>
-                <button id="aiopaused_true" disabled>AIO ■</button>
-                <button id="aiopaused_false" disabled>AIO ▶</button>
-                <button id="pygame_mixer_music_pause" disabled>Music ■</button>
-            </div>
-
-            <div class="button-container">
-                <div id=load_min>min</div>
-                <div id=load_avg>avg</div>
-                <div id=load_max>max</div>
-              <button id="load_rst" disabled>RESET</button>
-            </div>
-
-            <div id="level">(battery level unknown)</div>
-            <div id="stateBattery">(charging state unknown)</div>
-
-        </div>
-
-        <div id=box class="emscripten_border" hidden=true>
-
-            <div id="info" class="trinfo"></div>
-
-            <iframe id="iframe" class="framed" name="iframe"
-width="470px" height="90%"
-allowtransparency="true"
-style="z-index: 10;"
-style="background: #FFFFFF;"
-frameborder="1"
-                allowfullscreen="true"
-                webkitallowfullscreen="true"
-                msallowfullscreen="true"
-                mozallowfullscreen="true"
-                sandbox="allow-same-origin allow-top-navigation allow-scripts allow-pointer-lock"
-                allow="autoplay; fullscreen *; geolocation; microphone; camera; midi; monetization; xr-spatial-tracking; gamepad; gyroscope; accelerometer; xr; cross-origin-isolated"
-                src="https://pygame-web.github.io/cdn/0.9.3/empty.html"
-                scrolling="yes">
-            </iframe>
-        </div>
-
-    </div>
-
-
-    <div id="dlg" hidden>
-        <input type="file" id="dlg_multifile" multiple accept="image/*">
-        <label for="dlg_multifile">Select files</label>
-    </div>
-
-    <div id="pyconsole">
-        <div id="terminal" tabIndex=1 align="left"></div>
-    </div>
-
-    <script type="application/javascript">
-
-    globalThis.__canvas_resized = (self, ecw, ech) => {
-        console.warn("TODO: panda3d canvas monitor", self, ecw, ech)
+// ── GRID CLASS ─────────────────────────────────────────────────────────────
+class Grid {
+  constructor(auto=true){
+    this.cells=Array.from({length:N},()=>Array(N).fill('~'));
+    this.ships=[];
+    if(auto) for(const s of SIZES) this._rand(s);
+  }
+  _rand(size){
+    let tries=0;
+    while(tries++<1000){
+      const o=Math.random()<.5?'H':'V';
+      const r=Math.floor(Math.random()*(o==='H'?N:N-size+1));
+      const c=Math.floor(Math.random()*(o==='H'?N-size+1:N));
+      if(this.canPlace(r,c,size,o)){this.doPlace(r,c,size,o);return;}
     }
-
-    async function custom_onload(debug_hidden) {
-        // this is called before anything python is loaded
-        // make your js customization here
-        console.log(__FILE__, "custom_onload")
-
-        pyconsole.hidden = debug_hidden
-        system.hidden = debug_hidden
-        transfer.hidden = debug_hidden
-        info.hidden = debug_hidden
-        box.hidden =  debug_hidden
-
-        show_infobox()
+  }
+  canPlace(r,c,size,o){
+    for(let i=0;i<size;i++){
+      const rr=r+(o==='V'?i:0), cc=c+(o==='H'?i:0);
+      if(rr<0||rr>=N||cc<0||cc>=N) return false;
+      if(this.cells[rr][cc]!=='~') return false;
     }
-
-    function custom_prerun(){
-        // no python main and no (MEMFS + VFS) yet.
-        console.log(__FILE__, "custom_prerun")
-
+    return true;
+  }
+  doPlace(r,c,size,o){
+    for(let i=0;i<size;i++){
+      const rr=r+(o==='V'?i:0), cc=c+(o==='H'?i:0);
+      this.cells[rr][cc]='S';
     }
+    this.ships.push({row:r,col:c,size,o});
+  }
+  clear(){this.cells=Array.from({length:N},()=>Array(N).fill('~')); this.ships=[];}
+  randomize(){this.clear(); for(const s of SIZES) this._rand(s);}
+  attack(r,c){
+    const v=this.cells[r][c];
+    if(v==='S'){this.cells[r][c]='H';return'hit';}
+    if(v==='~'){this.cells[r][c]='M';return'miss';}
+    return'already';
+  }
+  allSunk(){return this.cells.every(row=>row.every(v=>v!=='S'));}
+}
 
-    function custom_postrun(){
-        // python main and no VFS filesystem yet.
-        console.log(__FILE__, "custom_postrun")
+// ── DRAWING HELPERS ────────────────────────────────────────────────────────
+function rect(x,y,w,h,fill,stroke,lw=1,r=0){
+  ctx.beginPath();
+  if(r>0){ctx.roundRect(x,y,w,h,r);}else{ctx.rect(x,y,w,h);}
+  if(fill){ctx.fillStyle=fill;ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw;ctx.stroke();}
+}
 
+function txt(text,x,y,color='#e6e6ff',font='24px sans-serif',align='left'){
+  ctx.font=font; ctx.fillStyle=color; ctx.textAlign=align; ctx.fillText(text,x,y);
+}
+
+function wrapText(text,maxW,font){
+  ctx.font=font;
+  const words=text.split(' '), lines=[];
+  let line='';
+  for(const w of words){
+    const test=(line?line+' ':'')+w;
+    if(ctx.measureText(test).width<=maxW){line=test;}
+    else{if(line)lines.push(line); line=w;}
+  }
+  if(line)lines.push(line);
+  return lines;
+}
+
+function btn(x,y,w,h,label,hov,active=true,baseC='#284878',hovC='#3c6496',brdC='#4678c8'){
+  const c=!active?'#19283a':hov?hovC:baseC;
+  rect(x,y,w,h,c,hov&&active?brdC:'#325090',2,8);
+  ctx.font='22px sans-serif'; ctx.fillStyle=active?'#e6e6ff':'#646480';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(label,x+w/2,y+h/2);
+  ctx.textBaseline='alphabetic';
+}
+
+function drawShip(ship,gx,gy){
+  const {row:r,col:c,size:sz,o}=ship;
+  const pad=4;
+  const rx=gx+c*CS+pad, ry=gy+r*CS+pad;
+  const rw=o==='H'?sz*CS-pad*2:CS-pad*2;
+  const rh=o==='H'?CS-pad*2:sz*CS-pad*2;
+  rect(rx,ry,rw,rh,'#87889a','#373a48',2,6);
+  if(o==='H'){
+    rect(rx+4,ry+Math.floor(rh/4),rw-8,Math.floor(rh/2),'#5f6270',null,0,4);
+    const bw=Math.max(10,Math.floor(rw/4)), bh=Math.max(6,rh-10);
+    rect(rx+Math.floor(rw/2)-Math.floor(bw/2),ry+5,bw,bh,'#a5a8b6',null,0,3);
+  }else{
+    rect(rx+Math.floor(rw/4),ry+4,Math.floor(rw/2),rh-8,'#5f6270',null,0,4);
+    const bw=Math.max(6,rw-10), bh=Math.max(10,Math.floor(rh/4));
+    rect(rx+5,ry+Math.floor(rh/2)-Math.floor(bh/2),bw,bh,'#a5a8b6',null,0,3);
+  }
+}
+
+function drawGrid(grid,gx,gy,hideShips=false,preview=null){
+  rect(gx,gy,N*CS,N*CS,'#194b82');
+  if(!hideShips) for(const s of grid.ships) drawShip(s,gx,gy);
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+    const v=grid.cells[r][c];
+    const cx=gx+c*CS, cy=gy+r*CS;
+    if(v==='H'){
+      rect(cx+4,cy+4,CS-8,CS-8,'#d23737',null,0,4);
+      ctx.strokeStyle='#ffc800'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(cx+10,cy+10); ctx.lineTo(cx+CS-10,cy+CS-10); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx+CS-10,cy+10); ctx.lineTo(cx+10,cy+CS-10); ctx.stroke();
+    }else if(v==='M'){
+      ctx.beginPath(); ctx.arc(cx+CS/2,cy+CS/2,8,0,Math.PI*2);
+      ctx.fillStyle='#a0a0b9'; ctx.fill();
+      ctx.strokeStyle='#646478'; ctx.lineWidth=2; ctx.stroke();
     }
-
-    function debug() {
-        // allow to gain access to dev tools from js console
-        // but only on desktop. difficult to reach when in iframe
-        python.config.debug = true
-        custom_onload(false)
-        Module.PyRun_SimpleString("shell.uptime()")
-        window_resize()
+  }
+  if(preview){
+    const[pr,pc,psz,po,valid]=preview;
+    const col=valid?'rgba(80,210,80,0.6)':'rgba(210,80,80,0.6)';
+    const brd=valid?'#50d250':'#d25050';
+    for(let i=0;i<psz;i++){
+      const rr=pr+(po==='V'?i:0), cc=pc+(po==='H'?i:0);
+      if(rr>=0&&rr<N&&cc>=0&&cc<N)
+        rect(gx+cc*CS+3,gy+rr*CS+3,CS-6,CS-6,col,brd,1,4);
     }
+  }
+  ctx.strokeStyle='#3769af'; ctx.lineWidth=1;
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+    ctx.strokeRect(gx+c*CS,gy+r*CS,CS,CS);
+  }
+  ctx.font='18px sans-serif'; ctx.fillStyle='#e6e6ff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  for(let c=0;c<N;c++) ctx.fillText(String.fromCharCode(65+c),gx+c*CS+CS/2,gy-14);
+  ctx.textAlign='right';
+  for(let r=0;r<N;r++) ctx.fillText(String(r+1),gx-6,gy+r*CS+CS/2);
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+}
 
-    function info_inline(data){
-        document.getElementById("info").innerHTML = data
+function drawHud(){
+  // Reset
+  const rHov=mx>=862&&mx<=970&&my>=10&&my<=44;
+  rect(862,10,108,34,rHov?'#3a5c94':'#263e69',rHov?'#5082c8':'#325090',2,6);
+  ctx.font='18px sans-serif'; ctx.fillStyle='#e6e6ff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('Reset',916,27);
+  // Quit
+  const qHov=mx>=980&&mx<=1088&&my>=10&&my<=44;
+  rect(980,10,108,34,qHov?'#822c2c':'#5a1c1c',qHov?'#be4141':'#8c2828',2,6);
+  ctx.fillText('Quit',1034,27);
+  ctx.textBaseline='alphabetic'; ctx.textAlign='left';
+}
+
+// ── GAME STATE ─────────────────────────────────────────────────────────────
+let state=MENU, twoPlayer=false, curPlayer=1;
+let gridP1=null, gridP2=null;
+let plShips=[], plOrient='H';
+let status='', aiDelay=0, lastTime=0;
+let passMsg='', passNext=PASS;
+let qPool=[], activeQ=null, qAnswer=-1;
+let scoreP1=0, scoreP2=0;
+
+function newGame(){
+  state=MENU; twoPlayer=false; curPlayer=1;
+  gridP1=null; gridP2=null;
+  plShips=[]; plOrient='H'; status=''; aiDelay=0;
+  passMsg=''; passNext=PASS;
+  qPool=Array.from({length:QUESTIONS.length},(_,i)=>i);
+  activeQ=null; qAnswer=-1; scoreP1=0; scoreP2=0;
+}
+newGame();
+
+function setupPlacement(player){
+  if(player===1) gridP1=new Grid(false);
+  else gridP2=new Grid(false);
+  plShips=[...SIZES]; plOrient='H';
+}
+
+function atkGrid(){return curPlayer===1?gridP1:gridP2;}
+function defGrid(){return curPlayer===1?gridP2:gridP1;}
+
+function passToNext(){
+  const nxt=3-curPlayer; curPlayer=nxt;
+  status=`Player ${nxt}'s turn — click the enemy grid!`;
+  passMsg=`Hand the device to Player ${nxt}\n\nPlayer ${nxt} — it's your turn!`;
+  passNext=PLAY; state=PASS;
+}
+
+function startQuestion(){
+  if(!qPool.length) qPool=Array.from({length:QUESTIONS.length},(_,i)=>i);
+  const i=Math.floor(Math.random()*qPool.length);
+  const idx=qPool.splice(i,1)[0];
+  activeQ=QUESTIONS[idx]; qAnswer=-1; state=QST;
+}
+
+function resolveQuestion(){
+  const correct=qAnswer===activeQ.a;
+  if(correct){
+    if(curPlayer===1) scoreP1++; else scoreP2++;
+    status='Correct! Bonus turn!'; state=PLAY;
+  }else{
+    status='Incorrect. Switch turns.';
+    if(twoPlayer) passToNext();
+    else{curPlayer=2; aiDelay=0; state=PLAY;}
+  }
+}
+
+function aiTurn(){
+  let tries=0;
+  while(tries++<200){
+    const r=Math.floor(Math.random()*N), c=Math.floor(Math.random()*N);
+    const res=gridP1.attack(r,c);
+    if(res!=='already'){
+      status=res==='hit'?'AI hit! Your turn.':'AI missed. Your turn.';
+      return;
     }
+  }
+}
 
-    function info_online(url) {
-        // display info about current APK
-        fetch( url /*, options */)
-            .then((response) => response.text())
-            .then((html) => {
-                info_inline(html);
-        })
-        .catch((error) => {
-            console.warn(error);
-        });
+function cellAt(gx,gy){
+  if(mx>=gx&&mx<gx+N*CS&&my>=gy&&my<gy+N*CS)
+    return[Math.floor((my-gy)/CS),Math.floor((mx-gx)/CS)];
+  return null;
+}
+
+function placementHover(){return cellAt(...PG);}
+
+// ── DRAW SCREENS ───────────────────────────────────────────────────────────
+// Button rects for hit-testing
+const B={
+  b1p:[W/2-165,340,150,55], b2p:[W/2+15,340,150,55],
+  rot:[715,430,160,45], rnd:[715,490,160,45], ok:[715,560,160,45],
+  qbtns:[[200,355,700,55],[200,423,700,55],[200,491,700,55],[200,559,700,55]],
+  qcont:[400,640,300,45]
+};
+
+function inRect(x,y,w,h){return mx>=x&&mx<=x+w&&my>=y&&my<=y+h;}
+function inB(b){return inRect(...b);}
+
+function drawMenu(){
+  ctx.fillStyle='#0f1932'; ctx.fillRect(0,0,W,H);
+  const cx=W/2;
+  ctx.font='bold 44px sans-serif'; ctx.fillStyle='#e6e6ff'; ctx.textAlign='center';
+  ctx.fillText('BATTLESHIP',cx,110);
+  ctx.font='26px sans-serif'; ctx.fillStyle='#aabbd4';
+  ctx.fillText('Select game mode',cx,270);
+  btn(...B.b1p,'1 Player',inB(B.b1p));
+  btn(...B.b2p,'2 Players',inB(B.b2p));
+  const notes=[
+    '1 Player — you vs. the AI',
+    '2 Players — hot-seat on the same screen',
+    '',
+    'Hit an enemy ship → answer a Cold War question.',
+    'Correct answer = BONUS TURN!',
+    '',
+    'Place ships manually or click Randomize.',
+    'Press R to flip ship orientation.'
+  ];
+  ctx.font='20px sans-serif'; ctx.fillStyle='#8899bb'; ctx.textAlign='center';
+  let ny=440;
+  for(const n of notes){
+    if(n==='Correct answer = BONUS TURN!') ctx.fillStyle='#ffd75a';
+    else ctx.fillStyle='#8899bb';
+    ctx.fillText(n,cx,ny); ny+=28;
+  }
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+}
+
+function drawPlacement(){
+  ctx.fillStyle='#0f1932'; ctx.fillRect(0,0,W,H);
+  const pl=state===P1P?'Player 1':'Player 2';
+  ctx.font='bold 32px sans-serif'; ctx.fillStyle='#e6e6ff'; ctx.textAlign='center';
+  ctx.fillText(`${pl} — Place Your Fleet`,W/2,50);
+  const g=state===P1P?gridP1:gridP2;
+  const hover=placementHover();
+  let preview=null;
+  if(hover&&plShips.length){
+    const[r,c]=hover, sz=plShips[0];
+    const valid=g.canPlace(r,c,sz,plOrient);
+    preview=[r,c,sz,plOrient,valid];
+  }
+  drawGrid(g,...PG,false,preview);
+  // ship list
+  ctx.font='20px sans-serif'; ctx.fillStyle='#aabbd4'; ctx.textAlign='left';
+  ctx.fillText('Ships to place:',715,165);
+  for(let i=0;i<plShips.length;i++){
+    const idx=SIZES.length-plShips.length+i;
+    ctx.fillStyle=i===0?'#ffd75a':'#8899bb';
+    ctx.fillText(`▶ ${NAMES[idx]}`,730,195+i*28);
+  }
+  if(!plShips.length){
+    ctx.font='18px sans-serif'; ctx.fillStyle='#50d250';
+    ctx.fillText('All ships placed!',715,400);
+  }
+  ctx.font='18px sans-serif'; ctx.fillStyle='#8899bb';
+  ctx.fillText(`Orientation: ${plOrient==='H'?'Horizontal':'Vertical'}`,715,390);
+  btn(...B.rot,`Rotate (${plOrient})`,inB(B.rot));
+  btn(...B.rnd,'Randomize',inB(B.rnd));
+  btn(...B.ok,'Confirm',inB(B.ok)&&!plShips.length,
+    !plShips.length?'#284878':'#19283a');
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+}
+
+function drawPass(){
+  ctx.fillStyle='#05091a'; ctx.fillRect(0,0,W,H);
+  const lines=passMsg.split('\n');
+  ctx.textAlign='center';
+  ctx.font='bold 34px sans-serif'; ctx.fillStyle='#ffd75a';
+  ctx.fillText(lines[0],W/2,280);
+  ctx.font='24px sans-serif'; ctx.fillStyle='#aabbd4';
+  for(let i=1;i<lines.length;i++) ctx.fillText(lines[i],W/2,330+i*36);
+  ctx.font='20px sans-serif'; ctx.fillStyle='#7788aa';
+  ctx.fillText('Click anywhere to continue',W/2,580);
+  drawHud();
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+}
+
+function drawPlay(){
+  ctx.fillStyle='#0f1932'; ctx.fillRect(0,0,W,H);
+  const atk=atkGrid(), def=defGrid();
+  const lgx=LG[0], lgy=LG[1], rgx=RG[0], rgy=RG[1];
+  // Labels
+  ctx.font='20px sans-serif'; ctx.fillStyle='#aabbd4'; ctx.textAlign='center';
+  if(twoPlayer){
+    ctx.fillText(`Player ${curPlayer}'s Fleet`,lgx+N*CS/2,lgy-32);
+    ctx.fillText("Enemy Waters",rgx+N*CS/2,rgy-32);
+  }else{
+    ctx.fillText('Your Fleet',lgx+N*CS/2,lgy-32);
+    ctx.fillText('Enemy Waters',rgx+N*CS/2,rgy-32);
+  }
+  drawGrid(atk,lgx,lgy,false);
+  drawGrid(def,rgx,rgy,true);
+  // Score
+  ctx.font='18px sans-serif'; ctx.fillStyle='#ffd75a'; ctx.textAlign='left';
+  if(twoPlayer){
+    ctx.fillText(`P1 Bonus: ${scoreP1}`,20,145);
+    ctx.fillText(`P2 Bonus: ${scoreP2}`,200,145);
+  }else{
+    ctx.fillText(`Bonus turns earned: ${scoreP1}`,20,145);
+  }
+  // Status
+  ctx.font='22px sans-serif'; ctx.fillStyle='#ffd75a'; ctx.textAlign='center';
+  ctx.fillText(status,W/2,140);
+  // Hover highlight on enemy grid
+  const hov=cellAt(rgx,rgy);
+  if(hov&&state===PLAY&&(twoPlayer||curPlayer===1)){
+    const[r,c]=hov;
+    const v=def.cells[r][c];
+    if(v==='~'||v==='S'){
+      ctx.strokeStyle='rgba(255,255,150,0.7)'; ctx.lineWidth=2;
+      ctx.strokeRect(rgx+c*CS+1,rgy+r*CS+1,CS-2,CS-2);
     }
+  }
+  // Game over banner
+  if(state===OVER){
+    ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,0,W,H);
+    ctx.font='bold 52px sans-serif'; ctx.fillStyle='#ffd75a'; ctx.textAlign='center';
+    ctx.fillText(status||'Game Over!',W/2,350);
+    ctx.font='26px sans-serif'; ctx.fillStyle='#aabbd4';
+    ctx.fillText('Click anywhere to return to menu',W/2,420);
+  }
+  drawHud();
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+}
 
-    function frame_online(url) {
-        window.frames["iframe"].location = url;
+function drawQuestion(){
+  drawPlay();
+  // Dim overlay
+  ctx.fillStyle='rgba(0,0,30,0.78)'; ctx.fillRect(0,0,W,H);
+  // Panel
+  const px=175,py=68,pw=750,ph=640;
+  rect(px,py,pw,ph,'#101830','#3a5c8c',2,12);
+  rect(px,py,pw,38,'#1a2d54',null,0,12);
+  ctx.font='bold 20px sans-serif'; ctx.fillStyle='#e6e6ff'; ctx.textAlign='center';
+  ctx.fillText('⚡ Cold War Question — Answer for a Bonus Turn!',px+pw/2,py+24);
+  // Question text
+  const qlines=wrapText(activeQ.q,680,'21px sans-serif');
+  ctx.font='21px sans-serif'; ctx.fillStyle='#dde6ff'; ctx.textAlign='left';
+  let qy=py+80;
+  for(const l of qlines){ctx.fillText(l,px+35,qy); qy+=30;}
+  // Answer buttons
+  const colors=['#1e3a5f','#1e3a5f','#1e3a5f','#1e3a5f'];
+  for(let i=0;i<4;i++){
+    const[bx,by,bw,bh]=B.qbtns[i];
+    let fill='#1e3a5f', stroke='#3a6aaf';
+    if(qAnswer===-1&&inRect(bx,by,bw,bh)){fill='#2a4e7a'; stroke='#5a8ad0';}
+    if(qAnswer===i){fill='#1e4a7a'; stroke='#78aaff';}
+    if(qAnswer!==-1&&i===activeQ.a){fill='#1a4a22'; stroke='#50d250';}
+    if(qAnswer!==-1&&qAnswer===i&&i!==activeQ.a){fill='#4a1a1a'; stroke='#d25050';}
+    rect(bx,by,bw,bh,fill,stroke,2,8);
+    // wrap choice text
+    const clines=wrapText(activeQ.c[i],660,'20px sans-serif');
+    ctx.font='20px sans-serif'; ctx.fillStyle='#dde6ff'; ctx.textAlign='left';
+    const lineH=24;
+    const textH=clines.length*lineH;
+    let cy2=by+bh/2-textH/2+lineH/2;
+    for(const cl of clines){ctx.fillText(cl,bx+14,cy2); cy2+=lineH;}
+  }
+  // Feedback & continue
+  if(qAnswer!==-1){
+    const correct=qAnswer===activeQ.a;
+    ctx.font='bold 20px sans-serif'; ctx.fillStyle=correct?'#50d250':'#d25050'; ctx.textAlign='center';
+    ctx.fillText(correct?'✓ Correct! You earn a BONUS TURN!':'✗ Incorrect. No bonus this time.',px+pw/2,B.qbtns[3][1]+B.qbtns[3][3]+30);
+    const[cx2,cy2,cw,ch]=B.qcont;
+    const chov=inRect(cx2,cy2,cw,ch);
+    rect(cx2,cy2,cw,ch,chov?'#3c6496':'#284878',chov?'#5082c8':'#3a6090',2,8);
+    ctx.font='22px sans-serif'; ctx.fillStyle='#e6e6ff';
+    ctx.fillText('Continue →',cx2+cw/2,cy2+ch/2+7);
+  }else{
+    ctx.font='18px sans-serif'; ctx.fillStyle='#7788aa'; ctx.textAlign='center';
+    ctx.fillText('Select an answer above',px+pw/2,B.qbtns[3][1]+B.qbtns[3][3]+26);
+  }
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+}
+
+// ── INPUT ──────────────────────────────────────────────────────────────────
+document.addEventListener('mousemove',e=>{const p=canvasPos(e);mx=p.x;my=p.y;});
+
+document.addEventListener('click',e=>{
+  const p=canvasPos(e); mx=p.x; my=p.y;
+
+  // HUD buttons (all states except MENU and placement)
+  if(state!==MENU&&state!==P1P&&state!==P2P){
+    if(mx>=862&&mx<=970&&my>=10&&my<=44){newGame();return;}
+    if(mx>=980&&mx<=1088&&my>=10&&my<=44){newGame();return;} // web: reset instead of quit
+  }
+
+  if(state===MENU){
+    if(inB(B.b1p)){twoPlayer=false;setupPlacement(1);state=P1P;}
+    else if(inB(B.b2p)){twoPlayer=true;setupPlacement(1);state=P1P;}
+  }
+  else if(state===P1P||state===P2P){
+    const g=state===P1P?gridP1:gridP2;
+    if(inB(B.rot)){plOrient=plOrient==='H'?'V':'H';}
+    else if(inB(B.rnd)){g.randomize();plShips=[];}
+    else if(inB(B.ok)&&!plShips.length){confirmPlacement();}
+    else{
+      const h=placementHover();
+      if(h&&plShips.length){
+        const[r,c]=h, sz=plShips[0];
+        if(g.canPlace(r,c,sz,plOrient)){g.doPlace(r,c,sz,plOrient);plShips.shift();}
+      }
     }
+  }
+  else if(state===PASS){state=passNext;}
+  else if(state===PLAY){
+    if(twoPlayer||curPlayer===1){
+      const cell=cellAt(...RG);
+      if(cell){
+        const[r,c]=cell;
+        const res=defGrid().attack(r,c);
+        if(res==='hit'){
+          if(defGrid().allSunk()){
+            state=OVER;
+            status=twoPlayer?`Player ${curPlayer} sank all ships! 🎉`:'You sank all enemy ships! You win!';
+          }else{
+            status=twoPlayer?`Player ${curPlayer} hit! Answer to earn a bonus turn.`:'Hit! Answer correctly for a bonus turn.';
+            startQuestion();
+          }
+        }else if(res==='miss'){
+          status=twoPlayer?`Player ${curPlayer} missed.`:'Missed. AI thinking…';
+          if(twoPlayer) passToNext();
+          else{curPlayer=2;aiDelay=0;}
+        }
+      }
+    }
+  }
+  else if(state===QST){
+    if(qAnswer===-1){
+      for(let i=0;i<4;i++) if(inRect(...B.qbtns[i])){qAnswer=i;break;}
+    }else if(inRect(...B.qcont)){resolveQuestion();}
+  }
+  else if(state===OVER){newGame();}
+});
 
-    </script>
+document.addEventListener('keydown',e=>{
+  if((state===P1P||state===P2P)&&(e.key==='r'||e.key==='R'))
+    plOrient=plOrient==='H'?'V':'H';
+});
 
+function confirmPlacement(){
+  if(state===P1P){
+    if(twoPlayer){
+      setupPlacement(2);
+      passMsg='Hand the device to Player 2\n\nPlayer 2 — place your fleet!';
+      passNext=P2P; state=PASS;
+    }else{
+      gridP2=new Grid(true);
+      curPlayer=1; status='Your turn — click the enemy grid to fire!'; state=PLAY;
+    }
+  }else{
+    curPlayer=1; status="Player 1's turn — click the enemy grid!";
+    passMsg='Hand the device back to Player 1\n\nThe battle begins!';
+    passNext=PLAY; state=PASS;
+  }
+}
+
+// ── GAME LOOP ──────────────────────────────────────────────────────────────
+function loop(ts){
+  const dt=ts-lastTime; lastTime=ts;
+  // AI turn
+  if(state===PLAY&&!twoPlayer&&curPlayer===2){
+    aiDelay+=dt;
+    if(aiDelay>=700){
+      aiTurn();
+      if(gridP1.allSunk()){state=OVER;status='All your ships sunk — AI Wins!';}
+      else{curPlayer=1;}
+      aiDelay=0;
+    }
+  }
+  // Draw
+  if(state===MENU) drawMenu();
+  else if(state===P1P||state===P2P) drawPlacement();
+  else if(state===PASS) drawPass();
+  else if(state===PLAY||state===OVER) drawPlay();
+  else if(state===QST) drawQuestion();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
 </body>
 </html>
