@@ -1,6 +1,7 @@
 import pygame
 import random
 import sys
+import asyncio
 
 # ─────────────────────────────────────────── CONFIGURATION
 SCREEN_W  = 1100
@@ -34,11 +35,17 @@ BTN_H  = ( 60, 100, 160)
 BTN_B  = ( 70, 120, 200)
 BTN_D  = ( 25,  40,  70)
 
-pygame.init()
-FONT  = pygame.font.SysFont("arial", 24)
-BFONT = pygame.font.SysFont("arial", 38)
-SFONT = pygame.font.SysFont("arial", 18)
-QFONT = pygame.font.SysFont("arial", 21)   # question body text
+FONT  = None
+BFONT = None
+SFONT = None
+QFONT = None
+
+def _init_fonts():
+    global FONT, BFONT, SFONT, QFONT
+    FONT  = pygame.font.Font(None, 28)
+    BFONT = pygame.font.Font(None, 44)
+    SFONT = pygame.font.Font(None, 22)
+    QFONT = pygame.font.Font(None, 25)
 
 # game states
 MENU     = 0
@@ -674,7 +681,7 @@ class BattleshipGame:
         self._draw_hud_buttons()
 
     # ── main loop ─────────────────────────────────────────────────────────────
-    def run(self):
+    async def run(self):
         while True:
             dt    = self.clock.tick(60)
             mx,my = pygame.mouse.get_pos()
@@ -804,8 +811,13 @@ class BattleshipGame:
             elif self.state == QUESTION:               self._draw_question()
 
             pygame.display.flip()
+            await asyncio.sleep(0)
 
 
-if __name__ == "__main__":
+async def main():
+    pygame.init()
+    _init_fonts()
     game = BattleshipGame()
-    game.run()
+    await game.run()
+
+asyncio.run(main())
